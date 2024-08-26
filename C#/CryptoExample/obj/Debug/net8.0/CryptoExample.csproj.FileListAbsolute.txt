@@ -1,0 +1,17 @@
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/bin/Debug/net8.0/CryptoExample
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/bin/Debug/net8.0/CryptoExample.deps.json
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/bin/Debug/net8.0/CryptoExample.runtimeconfig.json
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/bin/Debug/net8.0/CryptoExample.dll
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/bin/Debug/net8.0/CryptoExample.pdb
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/obj/Debug/net8.0/CryptoExample.GeneratedMSBuildEditorConfig.editorconfig
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/obj/Debug/net8.0/CryptoExample.AssemblyInfoInputs.cache
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/obj/Debug/net8.0/CryptoExample.AssemblyInfo.cs
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/obj/Debug/net8.0/CryptoExample.csproj.CoreCompileInputs.cache
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/obj/Debug/net8.0/CryptoExample.dll
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/obj/Debug/net8.0/refint/CryptoExample.dll
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/obj/Debug/net8.0/CryptoExample.pdb
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/obj/Debug/net8.0/CryptoExample.genruntimeconfig.cache
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/obj/Debug/net8.0/ref/CryptoExample.dll
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/bin/Debug/net8.0/BouncyCastle.Crypto.dll
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/obj/Debug/net8.0/CryptoExample.csproj.AssemblyReference.cache
+/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/obj/Debug/net8.0/CryptoEx.696E96B0.Up2Date
