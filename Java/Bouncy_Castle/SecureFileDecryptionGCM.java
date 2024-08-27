@@ -6,8 +6,11 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.Security;
+import com.sun.management.OperatingSystemMXBean;
 
 public class SecureFileDecryptionGCM {
 
@@ -44,22 +47,40 @@ public class SecureFileDecryptionGCM {
         }
     }
 
+    public static SecretKey getKeyFromPassword(String password) throws Exception {
+        // Sử dụng SHA-256 để băm mật khẩu thành khóa 256-bit
+        MessageDigest sha = MessageDigest.getInstance("SHA-256");
+        byte[] key = sha.digest(password.getBytes(StandardCharsets.UTF_8));
+        // Chuyển đổi thành SecretKeySpec cho AES
+        return new SecretKeySpec(key, "AES");
+    }
+
     public static void main(String[] args) throws Exception {
         String inputFile = "output.enc";  // Đường dẫn đến tệp đã mã hóa
-        String outputFile = "board_contents.csv"; // Đường dẫn đến tệp giải mã
+        String outputFile = "decrypted.csv"; // Đường dẫn đến tệp giải mã
 
-        // Sử dụng chuỗi "VPB4nk@crypto" làm khóa bí mật
-        String keyString = "VPB4nk@crypto123";
-        byte[] keyBytes = keyString.getBytes(StandardCharsets.UTF_8);
+        // Sử dụng chuỗi "Vpbank@123" để tạo khóa AES-256
+        String password = "Vpbank@123";
+        SecretKey secretKey = getKeyFromPassword(password);
 
-        // Đảm bảo rằng khóa có độ dài phù hợp (16 byte cho AES-128)
-        if (keyBytes.length != 16) {
-            throw new IllegalArgumentException("Key must be 16 bytes long for AES-128.");
-        }
+        // Đo thời gian chạy và sử dụng CPU/RAM trước khi chạy
+        long startTime = System.currentTimeMillis();
+        OperatingSystemMXBean osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean.class);
 
-        SecretKey secretKey = new SecretKeySpec(keyBytes, "AES");
+        double cpuLoadBefore = osBean.getProcessCpuLoad() * 100;
+        long startMemoryUsage = osBean.getCommittedVirtualMemorySize();
 
         decryptFile(inputFile, outputFile, secretKey);
+
+        // Đo thời gian chạy và sử dụng CPU/RAM sau khi chạy
+        double cpuLoadAfter = osBean.getProcessCpuLoad() * 100;
+        long endMemoryUsage = osBean.getCommittedVirtualMemorySize();
+        long endTime = System.currentTimeMillis();
+
+        // In ra các kết quả đo
+        System.out.println("Time taken: " + (endTime - startTime) + " ms");
+        System.out.println("CPU load during execution: " + ((cpuLoadAfter + cpuLoadBefore) / 2) + " %");
+        System.out.println("RAM used: " + (endMemoryUsage - startMemoryUsage) / (1024 * 1024) + " MB");
 
         System.out.println("File decrypted successfully!");
     }

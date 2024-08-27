@@ -1,302 +1,73 @@
-# JAVA Bouncy Castle
-So sánh các thư viện
-
-| Thư viện     | Tính năng                              | Tốc độ                                      | Bảo mật                                          |
-| ------------ | -------------------------------------- | ------------------------------------------- | ------------------------------------------------ |
-| JCA/JCE      | Mã hóa tiêu chuẩn, tích hợp trong Java | Rất nhanh, tối ưu hóa tốt                   | Rất cao, tiêu chuẩn trong Java                   |
-| BouncyCastle | Hỗ trợ nhiều thuật toán, đa dạng       | Tốt, nhưng chậm hơn so với JCA/JCE          | Rất cao, đặc biệt với thuật toán phức tạp        |
-| Apache Shiro | Quản lý người dùng, kiểm soát truy cập | Tốt, nhưng không tối ưu hóa cho mã hóa mạnh | Cao, phù hợp với ứng dụng web                    |
-| Google Tink  | Đơn giản, hỗ trợ đa nền tảng           | Tốt, dễ sử dụng                             | Rất cao, tuân theo tiêu chuẩn bảo mật của Google |
-
-## Bước 1: Tải và cài đặt thư viện Bouncy Castle vào dự án
+# JAVA 
+## Bouncy Castle
+### Bước 1: Tải và cài đặt thư viện Bouncy Castle vào dự án
 * Truy cập vào [trang chủ Bouncy Castle](https://www.bouncycastle.org/download/bouncy-castle-java/#latest) để down load file .jar
 * Copy/move file .jar vừa tải về vào thư mục dự án.
-## Bước 2: Code mẫu để mã hoá/giải mã file.
-### Sample code Encrypt
-```
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
-import javax.crypto.Cipher;
-
-import javax.crypto.KeyGenerator;
-
-import javax.crypto.SecretKey;
-
-import javax.crypto.spec.GCMParameterSpec;
-
-import javax.crypto.spec.SecretKeySpec;
-
-import java.io.FileInputStream;
-
-import java.io.FileOutputStream;
-
-import java.nio.charset.StandardCharsets;
-
-import java.security.SecureRandom;
-
-import java.security.Security;
-
-  
-
-public class SecureFileEncryptionGCM {
-
-  
-
-static {
-
-Security.addProvider(new BouncyCastleProvider());
-
-}
-
-  
-
-public static void encryptFile(String inputFile, String outputFile, SecretKey key) throws Exception {
-
-Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding", "BC");
-
-  
-
-// Tạo IV ngẫu nhiên
-
-byte[] iv = new byte[12]; // GCM thường sử dụng IV 12 byte
-
-SecureRandom random = new SecureRandom();
-
-random.nextBytes(iv);
-
-GCMParameterSpec gcmSpec = new GCMParameterSpec(128, iv); // Tag size là 128 bit
-
-  
-
-cipher.init(Cipher.ENCRYPT_MODE, key, gcmSpec);
-
-  
-
-try (FileInputStream fis = new FileInputStream(inputFile);
-
-FileOutputStream fos = new FileOutputStream(outputFile)) {
-
-  
-
-// Ghi IV ra tệp trước
-
-fos.write(iv);
-
-  
-
-byte[] buffer = new byte[1024];
-
-int bytesRead;
-
-  
-
-while ((bytesRead = fis.read(buffer)) != -1) {
-
-byte[] output = cipher.update(buffer, 0, bytesRead);
-
-if (output != null) {
-
-fos.write(output);
-
-}
-
-}
-
-  
-
-byte[] outputBytes = cipher.doFinal();
-
-if (outputBytes != null) {
-
-fos.write(outputBytes);
-
-}
-
-}
-
-}
-
-  
-
-public static void main(String[] args) throws Exception {
-
-String inputFile = "../../board_contents.csv"; // Đường dẫn đến tệp cần mã hóa
-
-String outputFile = "output.enc"; // Đường dẫn đến tệp đã mã hóa
-
-  
-
-// Sử dụng chuỗi "VPB4nk@crypto" làm khóa bí mật
-
-String keyString = "VPB4nk@crypto123";
-
-byte[] keyBytes = keyString.getBytes(StandardCharsets.UTF_8);
-
-  
-
-// Đảm bảo rằng khóa có độ dài phù hợp (16 byte cho AES-128)
-
-if (keyBytes.length != 16) {
-
-throw new IllegalArgumentException("Key must be 16 bytes long for AES-128.");
-
-}
-
-  
-
-SecretKey secretKey = new SecretKeySpec(keyBytes, "AES");
-
-  
-
-encryptFile(inputFile, outputFile, secretKey);
-
-  
-
-System.out.println("File encrypted successfully!");
-
-}
-
-}
-```
-### Sample code Decrypt
-```
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
-  
-
-import javax.crypto.Cipher;
-
-import javax.crypto.SecretKey;
-
-import javax.crypto.spec.GCMParameterSpec;
-
-import javax.crypto.spec.SecretKeySpec;
-
-import java.io.FileInputStream;
-
-import java.io.FileOutputStream;
-
-import java.nio.charset.StandardCharsets;
-
-import java.security.Security;
-
-  
-
-public class SecureFileDecryptionGCM {
-
-  
-
-static {
-
-Security.addProvider(new BouncyCastleProvider());
-
-}
-
-  
-
-public static void decryptFile(String inputFile, String outputFile, SecretKey key) throws Exception {
-
-try (FileInputStream fis = new FileInputStream(inputFile);
-
-FileOutputStream fos = new FileOutputStream(outputFile)) {
-
-  
-
-// Đọc IV từ tệp
-
-byte[] iv = new byte[12];
-
-fis.read(iv);
-
-GCMParameterSpec gcmSpec = new GCMParameterSpec(128, iv);
-
-  
-
-Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding", "BC");
-
-cipher.init(Cipher.DECRYPT_MODE, key, gcmSpec);
-
-  
-
-byte[] buffer = new byte[1024];
-
-int bytesRead;
-
-  
-
-while ((bytesRead = fis.read(buffer)) != -1) {
-
-byte[] output = cipher.update(buffer, 0, bytesRead);
-
-if (output != null) {
-
-fos.write(output);
-
-}
-
-}
-
-  
-
-byte[] outputBytes = cipher.doFinal();
-
-if (outputBytes != null) {
-
-fos.write(outputBytes);
-
-}
-
-}
-
-}
-
-  
-
-public static void main(String[] args) throws Exception {
-
-String inputFile = "output.enc"; // Đường dẫn đến tệp đã mã hóa
-
-String outputFile = "board_contents.csv"; // Đường dẫn đến tệp giải mã
-
-  
-
-// Sử dụng chuỗi "VPB4nk@crypto" làm khóa bí mật
-
-String keyString = "VPB4nk@crypto123";
-
-byte[] keyBytes = keyString.getBytes(StandardCharsets.UTF_8);
-
-  
-
-// Đảm bảo rằng khóa có độ dài phù hợp (16 byte cho AES-128)
-
-if (keyBytes.length != 16) {
-
-throw new IllegalArgumentException("Key must be 16 bytes long for AES-128.");
-
-}
-
-  
-
-SecretKey secretKey = new SecretKeySpec(keyBytes, "AES");
-
-  
-
-decryptFile(inputFile, outputFile, secretKey);
-
-  
-
-System.out.println("File decrypted successfully!");
-
-}
-
-}
-```
-## Bước 3: Mẫu hướng dẫn run chương trình
+### Bước 2: Code mẫu để mã hoá/giải mã file.
+* [Sample code Encrypt/Decrypt](https://github.com/d7cky/crypto/tree/main/Java/Bouncy_Castle)
+### Bước 3: Hướng dẫn run chương trình
 * Biên dịch mã nguồn
-``javac -cp bcprov-jdk18on-1.78.1.jar SecureFileEncryptionGCM.java``
+```
+javac -cp bcprov-jdk18on-1.78.1.jar SecureFileEncryptionGCM.java
+```
 * Chạy chương trình
-``java -cp :bcprov-jdk18on-1.78.1.jar SecureFileEncryptionGCM``
+```
+java -cp :bcprov-jdk18on-1.78.1.jar SecureFileEncryptionGCM
+```
+## JCA/JCE
+### Bước 1: Tải và cài đặt thư viện JCA/JCE vào dự án
+* Do thư viện đã được tích hợp trong JAVA nên bạn chỉ cần tải và cài đặt JDK là sẽ có thể sử dụng được thư viện. [Tải JDK](https://www.oracle.com/java/technologies/downloads/#java11).
+### Bước 2: Code mẫu để mã hoá/giải mã file.
+* [Sample code Encrypt/Decrypt](https://github.com/d7cky/crypto/tree/main/Java/JCAExample)
+### Bước 3: Hướng dẫn run chương trình
+* Biên dịch mã nguồn
+```
+javac FileEncryption.java
+```
+* Chạy chương trình
+```
+java FileEncryption
+```
+## Google Tink
+### Bước 1: Tải và cài đặt thư viện Google Tink
+#### Sử dụng Maven
+* Nếu bạn đang sử dụng Maven, thêm phần phụ thuộc sau vào tệp `pom.xml` của bạn:
+```
+<dependencies>
+    <dependency>
+        <groupId>com.google.crypto.tink</groupId>
+        <artifactId>tink</artifactId>
+        <version>1.9.0</version> <!-- hoặc phiên bản mới nhất -->
+    </dependency>
+</dependencies>
+```
+#### Sử dụng Gradle
+* Nếu bạn đang sử dụng Gradle, thêm phần phụ thuộc sau vào tệp `build.gradle`:
+```
+dependencies {
+    implementation 'com.google.crypto.tink:tink:1.9.0' // hoặc phiên bản mới nhất
+}
+```
+#### Tải JAR trực tiếp
+Nếu bạn không sử dụng Maven hoặc Gradle, bạn có thể tải các tệp JAR từ trang [Maven Central Repository](https://repo1.maven.org/maven2/com/google/crypto/tink/tink/1.14.1/):
+
+- Ngoài ra bạn cần tải thêm các thư viện phụ thuộc sau:
+	- **Protobuf**: Tải xuống `protobuf-java` từ [Maven Central](https://repo1.maven.org/maven2/com/google/protobuf/protobuf-java/3.21.12/).
+	- **Guava**: Tải xuống `guava` từ [Maven Central](https://repo1.maven.org/maven2/com/google/guava/guava/31.1-jre/).
+	- **SLF4J**: Tải xuống `slf4j-api` từ [Maven Central](https://repo1.maven.org/maven2/org/slf4j/slf4j-api/1.7.36/).
+	- **ErrorProne**: Tải xuống `error_prone_annotations` từ [Maven Central](https://repo1.maven.org/maven2/com/google/errorprone/error_prone_annotations/2.11.0/).
+- Thêm các tệp JAR đã tải vào classpath của dự án Java của bạn.
+### Bước 2: Code mẫu để mã hoá/giải mã
+- [Sample code Encrypt/Decrypt](https://github.com/d7cky/crypto/tree/main/Java/Google_Tink)
+### Bước 3: Hướng dẫn run chương trình
+* Biên dịch mã nguồn
+```
+javac -cp :tink-1.14.1.jar:protobuf-java-3.21.12.jar:guava-31.1-jre.jar:slf4j-api-1.7.36.jar:error_prone_annotations-2.11.0.jar TinkEncryptionExample.java
+```
+* Chạy chương trình
+```
+java -cp :tink-1.14.1.jar:protobuf-java-3.21.12.jar:guava-31.1-jre.jar:slf4j-api-1.7.36.jar:error_prone_annotations-2.11.0.jar TinkEncryptionExample
+```
 # Golang crypto/aes
 So sánh các thư viện
 
