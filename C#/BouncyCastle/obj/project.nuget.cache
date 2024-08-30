@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "pRpU0gXlgJY=",
+  "success": true,
+  "projectFilePath": "/Users/ducky/Documents/Work - VPBANK/cryoto_endecrypt/C#/BouncyCastle/BouncyCastle.csproj",
+  "expectedPackageFiles": [
+    "/Users/ducky/.nuget/packages/bouncycastle.netcore/2.2.1/bouncycastle.netcore.2.2.1.nupkg.sha512"
+  ],
+  "logs": []
+}

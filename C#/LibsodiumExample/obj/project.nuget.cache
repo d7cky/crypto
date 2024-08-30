@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "G31ewNGyWEc=",
+  "success": true,
+  "projectFilePath": "/Users/ducky/Documents/Work - VPBANK/cryoto_endecrypt/C#/LibsodiumExample/LibsodiumExample.csproj",
+  "expectedPackageFiles": [
+    "/Users/ducky/.nuget/packages/libsodium/1.0.19/libsodium.1.0.19.nupkg.sha512",
+    "/Users/ducky/.nuget/packages/sodium.core/1.3.5/sodium.core.1.3.5.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,114 +1,92 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Engines;
-using Org.BouncyCastle.Crypto.Modes;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
+using System.Threading;
 
-class Program
+class AesGcmFileEncryption
 {
-    static void Main()
+    static void Main(string[] args)
     {
-        string inputFile = "../../board_contents.csv";           // Tệp cần mã hóa
-        string encryptedFile = "example.enc";       // Tệp đã mã hóa
-        string decryptedFile = "board_contents.csv";   // Tệp sau khi giải mã
-        byte[] key = GenerateKeyFromPassword("Vpbank@123", 16); // Khóa AES 128-bit (16 byte)
-        byte[] iv = GenerateIV();                   // Nonce/IV 12 byte cho GCM
+        string inputFilePath = "../../3.csv";  // Đường dẫn tới file cần mã hoá
+        string encryptedFilePath = "encrypted.enc";  // Đường dẫn tới file mã hoá
+        string decryptedFilePath = "decrypted.csv";  // Đường dẫn tới file giải mã
 
-        // Mã hóa tệp
-        EncryptFile(inputFile, encryptedFile, key, iv);
-        Console.WriteLine($"File '{inputFile}' has been encrypted to '{encryptedFile}'.");
+        string keyString = "Vpbank@123";  // Chuỗi để tạo key
+        byte[] key = SHA256.HashData(Encoding.UTF8.GetBytes(keyString));  // Tạo key từ chuỗi
 
-        // Giải mã tệp
-        DecryptFile(encryptedFile, decryptedFile, key, iv);
-        Console.WriteLine($"File '{encryptedFile}' has been decrypted to '{decryptedFile}'.");
+        // Đo thời gian và tài nguyên khi mã hoá
+        Console.WriteLine("Encrypting file...");
+        MeasureResourceUsage(() => EncryptFile(inputFilePath, encryptedFilePath, key));
+
+        // Đo thời gian và tài nguyên khi giải mã
+        Console.WriteLine("Decrypting file...");
+        MeasureResourceUsage(() => DecryptFile(encryptedFilePath, decryptedFilePath, key));
     }
 
-    static byte[] GenerateKeyFromPassword(string password, int keySize)
+    static void EncryptFile(string inputFilePath, string outputFilePath, byte[] key)
     {
-        byte[] key = new byte[keySize];
-        byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+        byte[] nonce = new byte[12];  // 96-bit nonce cho AES-GCM
+        RandomNumberGenerator.Fill(nonce);  // Tạo nonce ngẫu nhiên
 
-        // Copy passwordBytes vào key, nếu passwordBytes ngắn hơn keySize thì key sẽ được padding với 0
-        Array.Copy(passwordBytes, key, Math.Min(passwordBytes.Length, key.Length));
+        byte[] tag = new byte[16];  // 128-bit tag cho AES-GCM
 
-        return key;
-    }
-
-    static byte[] GenerateIV()
-    {
-        var iv = new byte[12]; // 96-bit nonce
-        new SecureRandom().NextBytes(iv);
-        return iv;
-    }
-
-    static void EncryptFile(string inputFile, string outputFile, byte[] key, byte[] iv)
-    {
-        AeadParameters parameters = new AeadParameters(new KeyParameter(key), 128, iv);
-        GcmBlockCipher cipher = new GcmBlockCipher(new AesEngine());
-        cipher.Init(true, parameters);
-
-        using (FileStream fsInput = new FileStream(inputFile, FileMode.Open, FileAccess.Read))
-        using (FileStream fsOutput = new FileStream(outputFile, FileMode.Create, FileAccess.Write))
+        using (FileStream inputFile = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read))
+        using (FileStream outputFile = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write))
+        using (AesGcm aesGcm = new AesGcm(key))
         {
-            // Ghi IV vào tệp mã hóa để sử dụng khi giải mã
-            fsOutput.Write(iv, 0, iv.Length);
+            byte[] buffer = new byte[inputFile.Length];
+            inputFile.Read(buffer, 0, buffer.Length);
 
-            byte[] buffer = new byte[4096];
-            int bytesRead;
+            byte[] encryptedData = new byte[buffer.Length];
 
-            while ((bytesRead = fsInput.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                byte[] outputBytes = new byte[cipher.GetOutputSize(bytesRead)];
-                int outputLength = cipher.ProcessBytes(buffer, 0, bytesRead, outputBytes, 0);
-                if (outputLength > 0)
-                {
-                    fsOutput.Write(outputBytes, 0, outputLength);
-                }
-            }
+            aesGcm.Encrypt(nonce, buffer, encryptedData, tag);
 
-            byte[] finalBytes = new byte[cipher.GetOutputSize(0)];
-            int finalLength = cipher.DoFinal(finalBytes, 0);
-            if (finalLength > 0)
-            {
-                fsOutput.Write(finalBytes, 0, finalLength);
-            }
+            outputFile.Write(nonce);  // Ghi nonce đầu tiên
+            outputFile.Write(tag);    // Ghi tag sau nonce
+            outputFile.Write(encryptedData);  // Ghi dữ liệu mã hoá
         }
     }
 
-    static void DecryptFile(string inputFile, string outputFile, byte[] key, byte[] iv)
+    static void DecryptFile(string inputFilePath, string outputFilePath, byte[] key)
     {
-        AeadParameters parameters = new AeadParameters(new KeyParameter(key), 128, iv);
-        GcmBlockCipher cipher = new GcmBlockCipher(new AesEngine());
-        cipher.Init(false, parameters);
-
-        using (FileStream fsInput = new FileStream(inputFile, FileMode.Open, FileAccess.Read))
-        using (FileStream fsOutput = new FileStream(outputFile, FileMode.Create, FileAccess.Write))
+        using (FileStream inputFile = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read))
+        using (FileStream outputFile = new FileStream(outputFilePath, FileMode.Create, FileAccess.Write))
+        using (AesGcm aesGcm = new AesGcm(key))
         {
-            // Đọc IV từ tệp mã hóa
-            fsInput.Read(iv, 0, iv.Length);
+            byte[] nonce = new byte[12];
+            inputFile.Read(nonce, 0, nonce.Length);
 
-            byte[] buffer = new byte[4096];
-            int bytesRead;
+            byte[] tag = new byte[16];
+            inputFile.Read(tag, 0, tag.Length);
 
-            while ((bytesRead = fsInput.Read(buffer, 0, buffer.Length)) > 0)
-            {
-                byte[] outputBytes = new byte[cipher.GetOutputSize(bytesRead)];
-                int outputLength = cipher.ProcessBytes(buffer, 0, bytesRead, outputBytes, 0);
-                if (outputLength > 0)
-                {
-                    fsOutput.Write(outputBytes, 0, outputLength);
-                }
-            }
+            byte[] encryptedData = new byte[inputFile.Length - nonce.Length - tag.Length];
+            inputFile.Read(encryptedData, 0, encryptedData.Length);
 
-            byte[] finalBytes = new byte[cipher.GetOutputSize(0)];
-            int finalLength = cipher.DoFinal(finalBytes, 0);
-            if (finalLength > 0)
-            {
-                fsOutput.Write(finalBytes, 0, finalLength);
-            }
+            byte[] decryptedData = new byte[encryptedData.Length];
+
+            aesGcm.Decrypt(nonce, encryptedData, tag, decryptedData);
+
+            outputFile.Write(decryptedData);
         }
+    }
+
+    static void MeasureResourceUsage(Action action)
+    {
+        var stopwatch = new Stopwatch();
+        var process = Process.GetCurrentProcess();
+
+        stopwatch.Start();
+        action();
+        stopwatch.Stop();
+
+        double elapsedMilliseconds = stopwatch.Elapsed.TotalMilliseconds;
+        double cpuUsage = (process.TotalProcessorTime.TotalMilliseconds / elapsedMilliseconds) / Environment.ProcessorCount * 100;
+        double ramUsage = process.WorkingSet64 / 1024.0 / 1024.0;  // Đổi từ bytes sang MB
+
+        Console.WriteLine($"Time Elapsed: {elapsedMilliseconds} ms");
+        Console.WriteLine($"CPU Usage: {cpuUsage:F2}%");
+        Console.WriteLine($"RAM Usage: {ramUsage} MB");
     }
 }

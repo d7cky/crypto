@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/CryptoExample.csproj": {}
+    "/Users/ducky/Documents/Work - VPBANK/cryoto_endecrypt/C#/CryptoExample/CryptoExample.csproj": {}
   },
   "projects": {
-    "/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/CryptoExample.csproj": {
+    "/Users/ducky/Documents/Work - VPBANK/cryoto_endecrypt/C#/CryptoExample/CryptoExample.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/CryptoExample.csproj",
+        "projectUniqueName": "/Users/ducky/Documents/Work - VPBANK/cryoto_endecrypt/C#/CryptoExample/CryptoExample.csproj",
         "projectName": "CryptoExample",
-        "projectPath": "/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/CryptoExample.csproj",
+        "projectPath": "/Users/ducky/Documents/Work - VPBANK/cryoto_endecrypt/C#/CryptoExample/CryptoExample.csproj",
         "packagesPath": "/Users/ducky/.nuget/packages/",
-        "outputPath": "/Users/ducky/Documents/Work - VPBANK/cryoto/C#/CryptoExample/obj/",
+        "outputPath": "/Users/ducky/Documents/Work - VPBANK/cryoto_endecrypt/C#/CryptoExample/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/ducky/.nuget/NuGet/NuGet.Config"
@@ -43,9 +43,13 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "dependencies": {
-            "BouncyCastle": {
+            "System.Diagnostics.PerformanceCounter": {
               "target": "Package",
-              "version": "[1.8.9, )"
+              "version": "[8.0.0, )"
+            },
+            "System.Security.Cryptography.Algorithms": {
+              "target": "Package",
+              "version": "[4.3.1, )"
             }
           },
           "imports": [
