@@ -3,8 +3,11 @@ import com.google.crypto.tink.KeysetHandle;
 import com.google.crypto.tink.aead.AeadConfig;
 import com.google.crypto.tink.subtle.AesGcmJce;
 
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import com.sun.management.OperatingSystemMXBean;
+
+import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -22,9 +25,13 @@ public class TinkEncryptionExample {
         Aead aead = createAeadFromPassword(password);
 
         // Tệp đầu vào và tệp kết quả
-        String inputFile = "../../../../Research/Dev_with_GPU/wordlist_hash/5_1.csv";
-        String encryptedFile = "encrypted.enc";
-        String decryptedFile = "decrypted.csv";
+        // String inputFile = "../../../../Research/Dev_with_GPU/wordlist_hash/5_1.csv";
+        // String encryptedFile = "encrypted.enc";
+        // String decryptedFile = "decrypted.csv";
+
+        String inputDir = "../../kgon-g";  // Đường dẫn đến thư mục cần mã hóa
+        String encryptDir = "../../kgon-g-encrypt";  // Đường dẫn đến thư mục đã mã hóa
+        String decryptDir = "../../kgon-g-decrypt";  // Đường dẫn đến thư mục đã giải mã
 
         // Đo thời gian chạy và sử dụng CPU/RAM trước khi chạy
         long startTime = System.currentTimeMillis();
@@ -34,10 +41,12 @@ public class TinkEncryptionExample {
         long startMemoryUsage = osBean.getCommittedVirtualMemorySize();
 
         // Mã hóa tệp
-        encryptFile(inputFile, encryptedFile, aead);
+        // encryptFile(inputFile, encryptedFile, aead);
+        encryptDirectory(inputDir, encryptDir, aead);
 
         // Giải mã tệp
-        decryptFile(encryptedFile, decryptedFile, aead);
+        // decryptFile(encryptedFile, decryptedFile, aead);
+        decryptDirectory(encryptDir, decryptDir, aead);
 
         // Đo thời gian chạy và sử dụng CPU/RAM sau khi chạy
         double cpuLoadAfter = osBean.getProcessCpuLoad() * 100;
@@ -82,5 +91,55 @@ public class TinkEncryptionExample {
 
         // Ghi dữ liệu đã giải mã vào tệp đầu ra
         Files.write(Paths.get(outputFile), plaintext);
+    }
+
+    public static void encryptDirectory(String srcDirPath, String destDirPath, Aead key) throws Exception {
+        File srcDirectory = new File(srcDirPath);
+        if (!srcDirectory.isDirectory()) {
+            throw new IllegalArgumentException("The provided source path is not a directory");
+        }
+
+        File[] files = srcDirectory.listFiles();
+        if (files == null || files.length == 0) {
+            throw new IllegalArgumentException("The source directory is empty or cannot be read");
+        }
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                String newDestDirPath = Paths.get(destDirPath, file.getName()).toString();
+                Files.createDirectories(Paths.get(newDestDirPath));
+                encryptDirectory(file.getAbsolutePath(), newDestDirPath, key);
+            } else {
+                String outputFilePath = Paths.get(destDirPath, file.getName() + ".enc").toString();
+                encryptFile(file.getAbsolutePath(), outputFilePath, key);
+                System.out.println("Encrypted file: " + file.getAbsolutePath());
+            }
+        }
+    }
+
+    public static void decryptDirectory(String srcDirPath, String destDirPath, Aead key) throws Exception {
+        File srcDirectory = new File(srcDirPath);
+        if (!srcDirectory.isDirectory()) {
+            throw new IllegalArgumentException("The provided source path is not a directory");
+        }
+
+        File[] files = srcDirectory.listFiles();
+        if (files == null || files.length == 0) {
+            throw new IllegalArgumentException("The source directory is empty or cannot be read");
+        }
+
+        for (File file : files) {
+            if (file.isDirectory()) {
+                String newDestDirPath = Paths.get(destDirPath, file.getName()).toString();
+                Files.createDirectories(Paths.get(newDestDirPath));
+                decryptDirectory(file.getAbsolutePath(), newDestDirPath, key);
+            } else {
+                if (file.getName().endsWith(".enc")) {
+                    String outputFilePath = Paths.get(destDirPath, file.getName().substring(0, file.getName().length() - 4)).toString();
+                    decryptFile(file.getAbsolutePath(), outputFilePath, key);
+                    System.out.println("Decrypted file: " + file.getAbsolutePath());
+                }
+            }
+        }
     }
 }

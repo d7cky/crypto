@@ -9,10 +9,12 @@ class Program
     static void Main(string[] args)
     {
         // Đường dẫn file đầu vào và đầu ra
-        string inputFilePath = "../../5_1.csv"; // Thay đổi đường dẫn file phù hợp
-        string encryptedFilePath = "encrypt.enc";
-        string decryptedFilePath = "decrypt.csv";
-
+        // string inputFilePath = "../../5_1.csv"; // Thay đổi đường dẫn file phù hợp
+        // string encryptedFilePath = "encrypt.enc";
+        // string decryptedFilePath = "decrypt.csv";
+        string sourceDirectory = "../../kgon-g";      // Thư mục chứa các tệp cần mã hóa
+        string encryptedDirectory = "../../kgon-g-encrypt"; // Thư mục lưu các tệp đã mã hóa
+        string decryptedDirectory = "../../kgon-g-decrypt"; // Thư mục lưu các tệp đã giải mã
         // Khóa bí mật dưới dạng chuỗi
         string keyString = "Vpbank@123";
 
@@ -23,10 +25,12 @@ class Program
         byte[] nonce = SecretBox.GenerateNonce();
 
         // Đo hiệu suất mã hóa
-        MeasurePerformance(() => EncryptFile(inputFilePath, encryptedFilePath, nonce, key), "Encryption");
+        // MeasurePerformance(() => EncryptFile(inputFilePath, encryptedFilePath, nonce, key), "Encryption");
+        MeasurePerformance(() => EncryptDirectory(sourceDirectory, encryptedDirectory, nonce, key), "Encryption");
 
         // Đo hiệu suất giải mã
-        MeasurePerformance(() => DecryptFile(encryptedFilePath, decryptedFilePath, nonce, key), "Decryption");
+        // MeasurePerformance(() => DecryptFile(encryptedFilePath, decryptedFilePath, nonce, key), "Decryption");
+        MeasurePerformance(() => DecryptDirectory(encryptedDirectory, decryptedDirectory, nonce, key), "Decryption");
 
         // // Mã hóa file
         // EncryptFile(inputFilePath, encryptedFilePath, nonce, key);
@@ -35,6 +39,33 @@ class Program
         // // Giải mã file
         // DecryptFile(encryptedFilePath, decryptedFilePath, nonce, key);
         // Console.WriteLine($"File đã được giải mã: {decryptedFilePath}");
+    }
+
+    static void EncryptDirectory(string sourceDir, string destinationDir, byte[] nonce, byte[] key)
+    {
+        string[] files = Directory.GetFiles(sourceDir);
+
+        foreach (string file in files)
+        {
+            string fileName = Path.GetFileName(file);
+            string encryptedFilePath = Path.Combine(destinationDir, fileName + ".enc");
+
+            EncryptFile(file, encryptedFilePath, nonce, key);
+        }
+    }
+
+    static void DecryptDirectory(string sourceDir, string destinationDir, byte[] nonce, byte[] key)
+    {
+        string[] files = Directory.GetFiles(sourceDir, "*.enc");
+
+        foreach (string file in files)
+        {
+            string fileName = Path.GetFileName(file);
+            string decryptedFileName = fileName.Substring(0, fileName.Length - 4); // Bỏ đuôi .enc
+            string decryptedFilePath = Path.Combine(destinationDir, decryptedFileName);
+
+            DecryptFile(file, decryptedFilePath, nonce, key);
+        }
     }
 
     // Hàm chuyển đổi chuỗi thành mảng byte cho khóa

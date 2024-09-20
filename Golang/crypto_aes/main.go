@@ -11,7 +11,8 @@ import (
 	"os"
 	"runtime"
 	"time"
-
+	"io/ioutil"
+	"path/filepath"
 	"github.com/shirou/gopsutil/cpu"
 )
 
@@ -106,6 +107,55 @@ func decryptFile(inputFile, outputFile string, key []byte) error {
 	return nil
 }
 
+// Mã hóa tất cả các tệp trong một thư mục
+func encryptDirectory(srcDir, destDir string, key []byte) error {
+	// Lấy tất cả các tệp trong thư mục nguồn
+	files, err := ioutil.ReadDir(srcDir)
+	if err != nil {
+		return err
+	}
+
+	// Duyệt qua từng tệp và mã hóa
+	for _, file := range files {
+		if !file.IsDir() { // Bỏ qua thư mục con
+			srcFilePath := filepath.Join(srcDir, file.Name())
+			destFilePath := filepath.Join(destDir, file.Name()+".enc")
+
+			err := encryptFile(srcFilePath, destFilePath, key)
+			if err != nil {
+				return fmt.Errorf("error encrypting file %s: %v", srcFilePath, err)
+			}
+			fmt.Printf("Encrypted %s -> %s\n", srcFilePath, destFilePath)
+		}
+	}
+	return nil
+}
+
+// Giải mã tất cả các tệp trong một thư mục
+func decryptDirectory(srcDir, destDir string, key []byte) error {
+	// Lấy tất cả các tệp trong thư mục nguồn
+	files, err := ioutil.ReadDir(srcDir)
+	if err != nil {
+		return err
+	}
+
+	// Duyệt qua từng tệp và giải mã
+	for _, file := range files {
+		if !file.IsDir() && filepath.Ext(file.Name()) == ".enc" { // Bỏ qua thư mục con và chỉ giải mã tệp .enc
+			srcFilePath := filepath.Join(srcDir, file.Name())
+			destFileName := file.Name()[:len(file.Name())-4] // Bỏ phần đuôi .enc
+			destFilePath := filepath.Join(destDir, destFileName)
+
+			err := decryptFile(srcFilePath, destFilePath, key)
+			if err != nil {
+				return fmt.Errorf("error decrypting file %s: %v", srcFilePath, err)
+			}
+			fmt.Printf("Decrypted %s -> %s\n", srcFilePath, destFilePath)
+		}
+	}
+	return nil
+}
+
 func measurePerformance(f func()) (time.Duration, float64, float64) {
 	start := time.Now()
 
@@ -160,24 +210,43 @@ func main() {
 	password := "Vpbank@123"
 	key := generateKeyFromPassword(password) // Tạo khóa từ mật khẩu
 
-	fmt.Println("Starting encryption...")
+	// fmt.Println("Starting encryption...")
+	// encryptDuration, encryptCpuUsage, encryptMemUsed := measurePerformance(func() {
+	// 	err := encryptFile("../../3.csv", "example.enc", key)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// })
+	// Mã hóa tất cả các tệp trong thư mục
+	fmt.Println("Starting directory encryption...")
 	encryptDuration, encryptCpuUsage, encryptMemUsed := measurePerformance(func() {
-		err := encryptFile("../../3.csv", "example.enc", key)
+		err := encryptDirectory("../../kgon-g", "../../kgon-g-encrypt/", key)
 		if err != nil {
 			log.Fatal(err)
 		}
 	})
+	fmt.Println("Directory encrypted successfully.")
+
 	fmt.Printf("File encrypted successfully in %v\n", encryptDuration)
 	fmt.Printf("Encryption CPU usage: %.2f%%\n", encryptCpuUsage)
 	fmt.Printf("Encryption memory used: %.2f MB\n", encryptMemUsed)
 
-	fmt.Println("Starting decryption...")
+	// fmt.Println("Starting decryption...")
+	// decryptDuration, decryptCpuUsage, decryptMemUsed := measurePerformance(func() {
+	// 	err := decryptFile("example.enc", "board_contents.csv", key)
+	// 	if err != nil {
+	// 		log.Fatal(err)
+	// 	}
+	// })
+	// Giải mã tất cả các tệp trong thư mục
+	fmt.Println("Starting directory decryption...")
 	decryptDuration, decryptCpuUsage, decryptMemUsed := measurePerformance(func() {
-		err := decryptFile("example.enc", "board_contents.csv", key)
+		err := decryptDirectory("../../kgon-g-encrypt/", "../../kgon-g-decrypt/", key)
 		if err != nil {
 			log.Fatal(err)
 		}
 	})
+	fmt.Println("Directory decrypted successfully.")
 	fmt.Printf("File decrypted successfully in %v\n", decryptDuration)
 	fmt.Printf("Decryption CPU usage: %.2f%%\n", decryptCpuUsage)
 	fmt.Printf("Decryption memory used: %.2f MB\n", decryptMemUsed)

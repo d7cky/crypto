@@ -13,17 +13,53 @@ class Program
 {
     static void Main()
     {
-        string inputFile = "../../6_1.csv";           // Tệp cần mã hóa
-        string encryptedFile = "example.enc";       // Tệp đã mã hóa
-        string decryptedFile = "board_contents.csv";   // Tệp sau khi giải mã
+        // string inputFile = "../../6_1.csv";           // Tệp cần mã hóa
+        // string encryptedFile = "example.enc";       // Tệp đã mã hóa
+        // string decryptedFile = "board_contents.csv";   // Tệp sau khi giải mã
+        string sourceDirectory = "../../kgon-g";      // Thư mục chứa các tệp cần mã hóa
+        string encryptedDirectory = "../../kgon-g-encrypt"; // Thư mục lưu các tệp đã mã hóa
+        string decryptedDirectory = "../../kgon-g-decrypt"; // Thư mục lưu các tệp đã giải mã
         byte[] key = GenerateKeyFromPassword("Vpbank@123", 32); // Khóa AES 256-bit (32 byte)
         byte[] iv = GenerateIV();                   // Nonce/IV 12 byte cho GCM
 
+        // Tạo thư mục đích nếu chưa tồn tại
+        CreateDirectoryIfNotExists(encryptedDirectory);
+        CreateDirectoryIfNotExists(decryptedDirectory);
+
         // Đo hiệu suất mã hóa
-        MeasurePerformance(() => EncryptFile(inputFile, encryptedFile, key, iv), "Encryption");
+        // MeasurePerformance(() => EncryptFile(inputFile, encryptedFile, key, iv), "Encryption");
+        MeasurePerformance(() => EncryptDirectory(sourceDirectory, encryptedDirectory, key, iv), "Encryption");
 
         // Đo hiệu suất giải mã
-        MeasurePerformance(() => DecryptFile(encryptedFile, decryptedFile, key, iv), "Decryption");
+        // MeasurePerformance(() => DecryptFile(encryptedFile, decryptedFile, key, iv), "Decryption");
+        MeasurePerformance(() => DecryptDirectory(encryptedDirectory, decryptedDirectory, key, iv), "Decryption");
+    }
+
+    static void EncryptDirectory(string sourceDir, string destinationDir, byte[] key, byte[] iv)
+    {
+        string[] files = Directory.GetFiles(sourceDir);
+
+        foreach (string file in files)
+        {
+            string fileName = Path.GetFileName(file);
+            string encryptedFilePath = Path.Combine(destinationDir, fileName + ".enc");
+
+            EncryptFile(file, encryptedFilePath, key, iv);
+        }
+    }
+
+    static void DecryptDirectory(string sourceDir, string destinationDir, byte[] key, byte[] iv)
+    {
+        string[] files = Directory.GetFiles(sourceDir, "*.enc");
+
+        foreach (string file in files)
+        {
+            string fileName = Path.GetFileName(file);
+            string decryptedFileName = fileName.Substring(0, fileName.Length - 4); // Bỏ đuôi .enc
+            string decryptedFilePath = Path.Combine(destinationDir, decryptedFileName);
+
+            DecryptFile(file, decryptedFilePath, key, iv);
+        }
     }
 
     static byte[] GenerateKeyFromPassword(string password, int keySize)
@@ -133,5 +169,13 @@ class Program
         Console.WriteLine($"{operation} completed in {elapsedMilliseconds} ms");
         Console.WriteLine($"{operation} average CPU usage: {cpuUsage:F2}%");
         Console.WriteLine($"{operation} memory used: {finalMemory / (1024 * 1024)} MB");
+    }
+
+    static void CreateDirectoryIfNotExists(string directoryPath)
+    {
+        if (!Directory.Exists(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath);
+        }
     }
 }
